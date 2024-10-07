@@ -204,6 +204,8 @@ class TableCalendar<T> extends StatefulWidget {
   /// Called when the calendar is created. Exposes its PageController.
   final void Function(PageController pageController)? onCalendarCreated;
 
+  final bool isModeClearFocus;
+
   /// Creates a `TableCalendar` widget.
   TableCalendar({
     Key? key,
@@ -260,6 +262,7 @@ class TableCalendar<T> extends StatefulWidget {
     this.onPageChanged,
     this.onFormatChanged,
     this.onCalendarCreated,
+    this.isModeClearFocus = false,
   })  : assert(availableCalendarFormats.keys.contains(calendarFormat)),
         assert(availableCalendarFormats.length <= CalendarFormat.values.length),
         assert(weekendDays.isNotEmpty
@@ -355,7 +358,33 @@ class _TableCalendarState<T> extends State<TableCalendar<T>> {
 
     _updateFocusOnTap(day);
 
-    if (_isRangeSelectionOn && widget.onRangeSelected != null) {
+    // Check if range selection mode is on
+    if (_isRangeSelectionOn &&
+        widget.rangeSelectionMode == RangeSelectionMode.toggledOn) {
+      // Logic for clearing focus if isModeClearFocus is true
+      if (widget.isModeClearFocus) {
+        handleClearFocusDay(day);
+      } else {
+        // Original logic (without clearing focus)
+        handleWithoutClearFocusDay(day);
+      }
+    } else {
+      // Standard day selection logic when range selection is off
+      widget.onDaySelected?.call(day, _focusedDay.value);
+    }
+  }
+
+  void handleClearFocusDay(DateTime day) {
+    // If the selected day matches the previously selected day, clear focus and range
+    if (_firstSelectedDay != null && _firstSelectedDay == day) {
+      _firstSelectedDay = null;
+
+      // Clear focus by selecting a default day, such as firstDay or lastDay
+      _focusedDay.value =
+          widget.firstDay; // Or widget.lastDay, depending on your use case
+      widget.onRangeSelected!(null, null, _focusedDay.value); // Clear the range
+    } else {
+      // Normal range selection logic
       if (_firstSelectedDay == null) {
         _firstSelectedDay = day;
         widget.onRangeSelected!(_firstSelectedDay, null, _focusedDay.value);
@@ -368,8 +397,26 @@ class _TableCalendarState<T> extends State<TableCalendar<T>> {
           _firstSelectedDay = null;
         }
       }
+    }
+  }
+
+  void handleWithoutClearFocusDay(DateTime day) {
+    if (_firstSelectedDay != null && _firstSelectedDay == day) {
+      _firstSelectedDay = null;
+      widget.onRangeSelected!(null, null, _focusedDay.value); // Clear the range
     } else {
-      widget.onDaySelected?.call(day, _focusedDay.value);
+      if (_firstSelectedDay == null) {
+        _firstSelectedDay = day;
+        widget.onRangeSelected!(_firstSelectedDay, null, _focusedDay.value);
+      } else {
+        if (day.isAfter(_firstSelectedDay!)) {
+          widget.onRangeSelected!(_firstSelectedDay, day, _focusedDay.value);
+          _firstSelectedDay = null;
+        } else if (day.isBefore(_firstSelectedDay!)) {
+          widget.onRangeSelected!(day, _firstSelectedDay, _focusedDay.value);
+          _firstSelectedDay = null;
+        }
+      }
     }
   }
 
