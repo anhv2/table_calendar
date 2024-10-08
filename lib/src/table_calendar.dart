@@ -204,7 +204,14 @@ class TableCalendar<T> extends StatefulWidget {
   /// Called when the calendar is created. Exposes its PageController.
   final void Function(PageController pageController)? onCalendarCreated;
 
+  /// Turn on/off mode custom
   final bool isModeClearFocus;
+
+  /// Check disable on tap leftChevron
+  final bool isDisableLeftChevronTap;
+
+  /// Check disable on tap leftChevron
+  final bool isDisableRightChevronTap;
 
   /// Creates a `TableCalendar` widget.
   TableCalendar({
@@ -263,6 +270,8 @@ class TableCalendar<T> extends StatefulWidget {
     this.onFormatChanged,
     this.onCalendarCreated,
     this.isModeClearFocus = false,
+    this.isDisableLeftChevronTap = false,
+    this.isDisableRightChevronTap = false,
   })  : assert(availableCalendarFormats.keys.contains(calendarFormat)),
         assert(availableCalendarFormats.length <= CalendarFormat.values.length),
         assert(weekendDays.isNotEmpty
@@ -479,6 +488,7 @@ class _TableCalendarState<T> extends State<TableCalendar<T>> {
   }
 
   void _onLeftChevronTap() {
+    if (widget.isDisableLeftChevronTap) return;
     _pageController.previousPage(
       duration: widget.pageAnimationDuration,
       curve: widget.pageAnimationCurve,
@@ -486,6 +496,7 @@ class _TableCalendarState<T> extends State<TableCalendar<T>> {
   }
 
   void _onRightChevronTap() {
+    if (widget.isDisableRightChevronTap) return;
     _pageController.nextPage(
       duration: widget.pageAnimationDuration,
       curve: widget.pageAnimationCurve,
